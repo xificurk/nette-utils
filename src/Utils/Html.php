@@ -34,6 +34,9 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 	/** @var array  element's attributes */
 	public $attrs = array();
 
+	/** @var HtmlDataset  element's custom data attributes */
+	private $data;
+
 	/** @var array  of Html | string nodes */
 	protected $children = array();
 
@@ -128,6 +131,49 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 
 
 	/**
+	 * @param string    get the content of specified data attribute instead of all data
+	 * @return mixed
+	 */
+	public function getData($name = null)
+	{
+		if ($this->data === null) {
+			$this->data = new HtmlDataset;
+		}
+		return $name === null ? $this->data : $this->data->$name;
+	}
+
+
+	/**
+	 * @param string    [optional] name of the data attribute
+	 * @param mixed     value of the data attribute or array of all data attributes
+	 * @return self
+	 */
+	public function setData($name, $value = null)
+	{
+		if (func_num_args() === 1) {
+			$this->data = new HtmlDataset($name);
+		} else {
+			$this->getData()->$name = $value;
+		}
+		return $this;
+	}
+
+
+	/**
+	 * @param array|\Traversable
+	 * @return self
+	 */
+	public function addData($data)
+	{
+		$currentData = $this->getData();
+		foreach ($data as $name => $value) {
+			$currentData->$name = $value;
+		}
+		return $this;
+	}
+
+
+	/**
 	 * Overloaded setter for element's attribute.
 	 * @param  string    HTML attribute name
 	 * @param  mixed     HTML attribute value
@@ -135,13 +181,10 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 	 */
 	public function __set($name, $value)
 	{
-		if (!strncmp($name, 'data-', 5)) {
-			if (!isset($this->attrs['data'])) {
-				$this->attrs['data'] = new HtmlDataset;
-			}
-			$this->attrs['data']->{substr($name, 5)} = $value;
-		} elseif ($name === 'data' && (is_array($value) || $value instanceof \Traversable)) {
-			$this->attrs['data'] = new HtmlDataset($value);
+		if ($name === 'data') {
+			$this->setData($value);
+		} elseif (!strncmp($name, 'data-', 5)) {
+			$this->getData()->{substr($name, 5)} = $value;
 		} else {
 			$this->attrs[$name] = $value;
 		}
@@ -155,14 +198,17 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 	 */
 	public function &__get($name)
 	{
-		if (!strncmp($name, 'data-', 5)) {
-			$item = & $this->data->{substr($name, 5)};
+		if ($name === 'data') {
+			$data = $this->getData();
+			return $data;
+
+		} elseif (!strncmp($name, 'data-', 5)) {
+			$item = & $this->getData()->{substr($name, 5)};
 			return $item;
+
+		} else {
+			return $this->attrs[$name];
 		}
-		if ($name === 'data' && !isset($this->attrs['data'])) {
-			$this->attrs['data'] = new HtmlDataset;
-		}
-		return $this->attrs[$name];
 	}
 
 
@@ -173,8 +219,10 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 	 */
 	public function __isset($name)
 	{
-		if (!strncmp($name, 'data-', 5)) {
-			return isset($this->attrs['data']->{substr($name, 5)});
+		if ($name === 'data') {
+			return $this->data !== null;
+		} elseif (!strncmp($name, 'data-', 5)) {
+			return isset($this->data->{substr($name, 5)});
 		} else {
 			return isset($this->attrs[$name]);
 		}
@@ -188,8 +236,10 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 	 */
 	public function __unset($name)
 	{
-		if (!strncmp($name, 'data-', 5)) {
-			unset($this->attrs['data']->{substr($name, 5)});
+		if ($name === 'data') {
+			$this->data = null;
+		} elseif (!strncmp($name, 'data-', 5)) {
+			unset($this->data->{substr($name, 5)});
 		} else {
 			unset($this->attrs[$name]);
 		}
@@ -209,9 +259,6 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 			$m = substr($m, 3);
 			$m[0] = $m[0] | "\x20";
 			if ($p === 'get') {
-				if ($m === 'data' && count($args)) {
-					return isset($this->attrs[$m]->{$args[0]}) ? $this->attrs[$m]->{$args[0]} : NULL;
-				}
 				return isset($this->attrs[$m]) ? $this->attrs[$m] : NULL;
 
 			} elseif ($p === 'add') {
@@ -221,20 +268,11 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 
 		if (count($args) === 0) { // invalid
 
-		} elseif (count($args) === 1) { // set
-			$this->$m = $args[0];
-
 		} elseif ($m === 'data') {
-			if (!isset($this->attrs['data'])) {
-				$this->attrs['data'] = new HtmlDataset;
-			}
-			if (is_array($args[0]) || $args[0] instanceof \Traversable) {
-				foreach ($args[0] as $key => $value) {
-					$this->attrs['data']->$key = $value;
-				}
-			} else {
-				$this->attrs['data']->{$args[0]} = $args[1];
-			}
+			call_user_func_array(array($this, 'setData'), $args);
+
+		} elseif (count($args) === 1) { // set
+			$this->attrs[$m] = $args[0];
 
 		} elseif ((string) $args[0] === '') {
 			$tmp = & $this->attrs[$m]; // appending empty value? -> ignore, but ensure it exists
@@ -556,10 +594,6 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 				}
 				continue;
 
-			} elseif ($key === 'data' && $value instanceof HtmlDataset) {
-				$s .= count($value) ? ' ' . (string) $value : '';
-				continue;
-
 			} elseif (is_array($value)) {
 				$tmp = NULL;
 				foreach ($value as $k => $v) {
@@ -580,6 +614,10 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 
 			$q = strpos($value, '"') === FALSE ? '"' : "'";
 			$s .= ' ' . $key . '=' . $q . str_replace(array('&', $q), array('&amp;', $q === '"' ? '&quot;' : '&#39;'), $value) . $q;
+		}
+
+		if ($this->data instanceof HtmlDataset && count($this->data)) {
+			$s .= ' ' . $this->data->__toString();
 		}
 
 		$s = str_replace('@', '&#64;', $s);

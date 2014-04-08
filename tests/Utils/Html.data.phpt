@@ -38,14 +38,6 @@ test(function() { // function
 });
 
 
-test(function() { // simple data attribute
-	$el = Html::el('div');
-	$el->data = 'simple';
-
-	Assert::same( '<div data="simple"></div>', (string) $el );
-});
-
-
 test(function() { // backward compatibility: direct assignment using dash-separated name
 	$el = Html::el('div');
 
