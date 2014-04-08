@@ -46,28 +46,52 @@ test(function() { // standard usage
 test(function() { // backward compatibility: array access
 	$d = new HtmlDataset;
 
-	$d['testAttr'] = 'test';
+	Assert::error(function () use ($d) {
+		$d['testAttr'] = 'test';
+	}, E_USER_DEPRECATED, 'Array access to Html data attributes is deprecated, use $el->data->attrName instead.');
+
 	Assert::true( isset($d->testAttr) );
 	Assert::same( 'test', $d->testAttr );
-	Assert::true( isset($d['testAttr']) );
-	Assert::same( 'test', $d['testAttr'] );
 
-	unset($d['testAttr']);
+	Assert::error(function () use ($d) {
+		Assert::true( isset($d['testAttr']) );
+	}, E_USER_DEPRECATED, 'Array access to Html data attributes is deprecated, use $el->data->attrName instead.');
+
+	Assert::error(function () use ($d) {
+		Assert::same( 'test', $d['testAttr'] );
+	}, E_USER_DEPRECATED, 'Array access to Html data attributes is deprecated, use $el->data->attrName instead.');
+
+	Assert::error(function () use ($d) {
+		unset($d['testAttr']);
+	}, E_USER_DEPRECATED, 'Array access to Html data attributes is deprecated, use $el->data->attrName instead.');
+
 	Assert::false( isset($d->testAttr) );
-	Assert::false( isset($d['testAttr']) );
+	Assert::false( @isset($d['testAttr']) );
 });
 
 
 test(function() { // backward compatibility: dash-separated names
 	$d = new HtmlDataset;
 
-	$d['test-attr'] = 'test';
+	Assert::error(function () use ($d) {
+		$d->{'test-attr'} = 'test';
+	}, E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.');
+
 	Assert::true( isset($d->testAttr) );
 	Assert::same( 'test', $d->testAttr );
-	Assert::true( isset($d['test-attr']) );
-	Assert::same( 'test', $d['test-attr'] );
 
-	unset($d['test-attr']);
+	Assert::error(function () use ($d) {
+		Assert::true( isset($d->{'test-attr'}) );
+	}, E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.');
+
+	Assert::error(function () use ($d) {
+		Assert::same( 'test', $d->{'test-attr'} );
+	}, E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.');
+
+	Assert::error(function () use ($d) {
+		unset($d->{'test-attr'});
+	}, E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.');
+
 	Assert::false( isset($d->testAttr) );
-	Assert::false( isset($d['test-attr']) );
+	Assert::false( @isset($d->{'test-attr'}) );
 });

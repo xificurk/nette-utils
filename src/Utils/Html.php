@@ -60,18 +60,19 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 		$parts = explode(' ', $name, 2);
 		$el->setName($parts[0]);
 
-		if (is_array($attrs)) {
-			$el->addAttributes($attrs);
-
-		} elseif ($attrs !== NULL) {
+		if (!is_array($attrs) && $attrs !== NULL) {
 			$el->setText($attrs);
+			$attrs = array();
+
 		}
 
 		if (isset($parts[1])) {
 			foreach (Strings::matchAll($parts[1] . ' ', '#([a-z0-9:-]+)(?:=(["\'])?(.*?)(?(2)\\2|\s))?#i') as $m) {
-				$el->{$m[1]} = isset($m[3]) ? $m[3] : TRUE;
+				$attrs[$m[1]] = isset($m[3]) ? $m[3] : TRUE;
 			}
 		}
+
+		$el->addAttributes((array) $attrs);
 
 		return $el;
 	}
@@ -124,7 +125,15 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 	public function addAttributes(array $attrs)
 	{
 		foreach ($attrs as $key => $value) {
-			$this->$key = $value;
+			if (!strncmp($key, 'data-', 5)) { // allow passing raw attribute names
+				$key = strtolower(substr($key, 5));
+				$key = preg_replace('#-(?=[a-z])#', ' ', $key);
+				$key = substr(ucwords('x' . $key), 1);
+				$key = str_replace(' ', '', $key);
+				$this->getData()->$key = $value;
+			} else {
+				$this->attrs[$key] = $value;
+			}
 		}
 		return $this;
 	}
@@ -184,6 +193,7 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 		if ($name === 'data') {
 			$this->setData($value);
 		} elseif (!strncmp($name, 'data-', 5)) {
+			trigger_error('Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.', E_USER_DEPRECATED);
 			$this->getData()->{substr($name, 5)} = $value;
 		} else {
 			$this->attrs[$name] = $value;
@@ -203,6 +213,7 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 			return $data;
 
 		} elseif (!strncmp($name, 'data-', 5)) {
+			trigger_error('Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.', E_USER_DEPRECATED);
 			$item = & $this->getData()->{substr($name, 5)};
 			return $item;
 
@@ -222,6 +233,7 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 		if ($name === 'data') {
 			return $this->data !== null;
 		} elseif (!strncmp($name, 'data-', 5)) {
+			trigger_error('Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.', E_USER_DEPRECATED);
 			return isset($this->data->{substr($name, 5)});
 		} else {
 			return isset($this->attrs[$name]);
@@ -239,6 +251,7 @@ class Html extends Nette\Object implements \ArrayAccess, \Countable, \IteratorAg
 		if ($name === 'data') {
 			$this->data = null;
 		} elseif (!strncmp($name, 'data-', 5)) {
+			trigger_error('Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.', E_USER_DEPRECATED);
 			unset($this->data->{substr($name, 5)});
 		} else {
 			unset($this->attrs[$name]);

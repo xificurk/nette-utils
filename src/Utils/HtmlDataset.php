@@ -101,45 +101,53 @@ class HtmlDataset extends Nette\Object implements \ArrayAccess, \Countable, \Ite
 
 	/**
 	 * Inserts (replaces) content for data attribute (\ArrayAccess implementation).
+	 * @deprecated
 	 * @param  string name
 	 * @param  mixed data
 	 * @return void
 	 */
 	public function offsetSet($name, $value)
 	{
+		trigger_error('Array access to Html data attributes is deprecated, use $el->data->attrName instead.', E_USER_DEPRECATED);
 		$this->$name = $value;
 	}
 
 
 	/**
 	 * Returns content of data attribute (\ArrayAccess implementation).
+	 * @deprecated
 	 * @param  string name
 	 * @return mixed
 	 */
 	public function offsetGet($name)
 	{
+		trigger_error('Array access to Html data attributes is deprecated, use $el->data->attrName instead.', E_USER_DEPRECATED);
 		return $this->$name;
 	}
 
 
 	/**
 	 * Does data attribute exist? (\ArrayAccess implementation).
+	 * @deprecated
 	 * @param  string name
 	 * @return bool
 	 */
 	public function offsetExists($name)
 	{
+		trigger_error('Array access to Html data attributes is deprecated, use $el->data->attrName instead.', E_USER_DEPRECATED);
 		return isset($this->$name);
 	}
 
 
 	/**
 	 * Removes data attribute (\ArrayAccess implementation).
+	 * @deprecated
 	 * @param  int name
 	 * @return void
 	 */
 	public function offsetUnset($name)
 	{
+		trigger_error('Array access to Html data attributes is deprecated, use $el->data->attrName instead.', E_USER_DEPRECATED);
 		unset($this->$name);
 	}
 
@@ -175,6 +183,7 @@ class HtmlDataset extends Nette\Object implements \ArrayAccess, \Countable, \Ite
 			return strtolower(substr($s, 0, 1)) . substr($s, 1);
 		}
 
+		trigger_error('Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.', E_USER_DEPRECATED);
 		return preg_replace_callback(
 			'#-([a-z])#',
 			function ($m) {

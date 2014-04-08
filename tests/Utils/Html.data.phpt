@@ -41,13 +41,37 @@ test(function() { // function
 test(function() { // backward compatibility: direct assignment using dash-separated name
 	$el = Html::el('div');
 
-	$el->{'data-test-attr'} = 'test';
+	Assert::error(function () use ($el) {
+		$el->{'data-test-attr'} = 'test';
+	}, array(
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+	));
+
 	Assert::type( 'Nette\Utils\HtmlDataset', $el->data );
 	Assert::same( 1, count($el->data) );
 	Assert::same( 'test', $el->data->testAttr );
-	Assert::true( isset($el->{'data-test-attr'}) );
-	Assert::same( 'test', $el->{'data-test-attr'} );
 
-	unset($el->{'data-test-attr'});
-	Assert::false( isset($el->{'data-test-attr'}) );
+	Assert::error(function () use ($el) {
+		Assert::true( isset($el->{'data-test-attr'}) );
+	}, array(
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+	));
+
+	Assert::error(function () use ($el) {
+		Assert::same( 'test', $el->{'data-test-attr'} );
+	}, array(
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+	));
+
+	Assert::error(function () use ($el) {
+		unset($el->{'data-test-attr'});
+	}, array(
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+		array(E_USER_DEPRECATED, 'Access to Html data attributes via dash-separated names is deprecated, use $el->data->camelCase instead.'),
+	));
+
+	Assert::false( @isset($el->{'data-test-attr'}) );
 });
